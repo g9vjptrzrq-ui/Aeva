@@ -1,21 +1,39 @@
 workflows:
   aeva-ios:
-    name: Aeva iOS Build
+    name: Aeva iOS Test
 
     environment:
       xcode: latest
 
     scripts:
+      - name: Show project files
+        script: |
+          echo "=== CARTELLA PROGETTO ==="
+          pwd
+          echo "=== FILE ==="
+          find . -maxdepth 3 -type f | sort
+
+      - name: Find Xcode project
+        script: |
+          echo "=== XCODE PROJECTS ==="
+          find . -name "*.xcodeproj" -o -name "*.xcworkspace"
+
       - name: Build Aeva
         script: |
-          xcodebuild archive \
-            -project "Aeva.xcodeproj" \
-            -scheme "Aeva" \
-            -configuration Release \
-            -sdk iphoneos \
-            -archivePath "$CM_BUILD_DIR/Aeva.xcarchive" \
-            CODE_SIGNING_ALLOWED=NO
+          set -eux
+
+          PROJECT=$(find . -maxdepth 3 -name "Aeva.xcodeproj" -print -quit)
+
+          if [ -z "$PROJECT" ]; then
+            echo "ERRORE: Aeva.xcodeproj non trovato!"
+            exit 1
+          fi
+
+          echo "Progetto trovato: $PROJECT"
+
+          xcodebuild \
+            -project "$PROJECT" \
+            -list
 
     artifacts:
-      - "$CM_BUILD_DIR/Aeva.xcarchive"
       - /tmp/xcodebuild_logs/*.log
